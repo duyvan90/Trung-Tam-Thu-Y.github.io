@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Database configuration
 define('DB_HOST', '127.0.0.1');   // không kèm :port
 define('DB_USER', 'root');
-define('DB_PASS', '12345689');
+define('DB_PASS', '');  // XAMPP default: empty password. Change if you set a password for MySQL root user
 define('DB_NAME', 'petcare_db');
 
 // Detect project base url relative to document root (works even inside subfolders)

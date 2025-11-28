@@ -2,6 +2,19 @@
 // PHẦN PHP XỬ LÝ DỮ LIỆU ĐƯỢC GIỮ NGUYÊN HOÀN TOÀN
 include('../config/db.php');  // db.php đã tự session_start() nếu chưa có
 
+// Ensure BASE_URL is set for header.php
+if (!isset($BASE_URL)) {
+    $BASE_URL = '/';
+    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+        $documentRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/');
+        $projectRoot  = rtrim(str_replace('\\', '/', realpath(__DIR__ . '/..')), '/');
+        if ($documentRoot && $projectRoot && strpos($projectRoot, $documentRoot) === 0) {
+            $relativePath = trim(substr($projectRoot, strlen($documentRoot)), '/');
+            $BASE_URL = '/' . ($relativePath ? $relativePath . '/' : '');
+        }
+    }
+}
+
 // Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php'); 
@@ -144,8 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <style>
     /* --- CSS RIÊNG CHO PHẦN PROFILE VÀ MODAL --- */
     
-    /* Cấu trúc chính */
-    .container { width: 90%; max-width: 1100px; margin: 0 auto; padding: 20px 0; }
+    /* Cấu trúc chính - chỉ override cho main content, không ảnh hưởng navbar */
+    main.container { width: 90%; max-width: 1100px; margin: 0 auto; padding: 20px 0; }
     
     /* Notice */
     .notice { 
@@ -341,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             HỦY
         </button>
 
-        <a href="<?= $BASE ?>/user/logout.php" class="logout-text-btn">
+        <a href="<?php echo isset($BASE_URL) ? rtrim($BASE_URL, '/') : ''; ?>/user/logout.php" class="logout-text-btn">
             ĐĂNG XUẤT
         </a>
     </div>
