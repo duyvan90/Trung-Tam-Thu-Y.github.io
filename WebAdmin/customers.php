@@ -77,14 +77,10 @@ $bookings = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
 <section id="sidebar">
     <a href="#" class="brand"><i class='bx bxs-clinic'></i><span class="text">PETCARE</span></a>
     <ul class="side-menu top">
-        <li><a href="index.php"><i class='bx bxs-dashboard'></i><span class="text">Dashboard</span></a></li>
         <li><a href="services.php"><i class='bx bxs-briefcase-alt-2'></i><span class="text">Dịch Vụ</span></a></li>
         <li><a href="doctors.php"><i class='bx bxs-user-voice'></i><span class="text">Bác Sĩ</span></a></li>
-        <li><a href="appointments.php"><i class='bx bxs-calendar'></i><span class="text">Lịch Hẹn</span></a></li>
 		<li class="active"><a href="customers.php"><i class='bx bxs-group'></i><span class="text">Khách Hàng</span></a></li>
 		<li><a href="blogs.php"><i class='bx bxs-book-content'></i><span class="text">Blogs</span></a></li>
-		<li><a href="schedule.php"><i class='bx bxs-time-five'></i><span class="text">Lịch Làm Việc</span></a></li>
-		<li><a href="AccountManagement.php"><i class='bx bxs-user-account'></i><span class="text">Quản Lý Tài Khoản</span></a></li>
     </ul>
 </section>
 

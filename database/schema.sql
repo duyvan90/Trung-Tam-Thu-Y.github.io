@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS doctors (
 -- Table: services
 CREATE TABLE IF NOT EXISTS services (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     short_description VARCHAR(500),
     description TEXT,
     image VARCHAR(255),
@@ -143,12 +143,12 @@ UPDATE doctors SET password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at
 
 -- Insert sample data for services
 INSERT INTO services (name, short_description, description, image) VALUES
-('Khám tổng quát', 'Khám sức khỏe định kỳ', 'Khám tổng quát, xét nghiệm cơ bản, tư vấn dinh dưỡng.', 'assets/img/service/service1.png'),
-('Tiêm phòng', 'Vaccine & phòng bệnh', 'Tiêm phòng định kỳ, phác đồ tiêm an toàn.', 'assets/img/service/service2.png'),
-('Phẫu thuật', 'Sát trùng & vô trùng', 'Phẫu thuật tiểu phẫu và đại phẫu, chăm sóc hậu phẫu.', 'assets/img/service/service3.png'),
-('Chẩn đoán hình ảnh', 'X-Quang & Siêu âm', 'Chẩn đoán hình ảnh tiên tiến với X-Quang và Siêu âm.', 'assets/img/service/service4.png'),
-('Spa & Grooming', 'Chăm sóc & làm đẹp', 'Dịch vụ tắm, cắt tỉa lông, chăm sóc móng chuyên nghiệp.', 'assets/img/service/service5.png'),
-('Pet Hotel', 'Lưu trú thú cưng', 'Hệ thống phòng lưu trú cao cấp, sạch sẽ, có giám sát sức khỏe liên tục.', 'assets/img/service/service6.png');
+('Khám tổng quát', 'Khám sức khỏe định kỳ', 'Khám tổng quát, xét nghiệm cơ bản, tư vấn dinh dưỡng.', '/assets/img/service/service1.png'),
+('Tiêm phòng', 'Vaccine & phòng bệnh', 'Tiêm phòng định kỳ, phác đồ tiêm an toàn.', '/assets/img/service/service2.png'),
+('Phẫu thuật', 'Sát trùng & vô trùng', 'Phẫu thuật tiểu phẫu và đại phẫu, chăm sóc hậu phẫu.', '/assets/img/service/service3.png'),
+('Chẩn đoán hình ảnh', 'X-Quang & Siêu âm', 'Chẩn đoán hình ảnh tiên tiến với X-Quang và Siêu âm.', '/assets/img/service/service4.png'),
+('Spa & Grooming', 'Chăm sóc & làm đẹp', 'Dịch vụ tắm, cắt tỉa lông, chăm sóc móng chuyên nghiệp.', '/assets/img/service/service5.png'),
+('Pet Hotel', 'Lưu trú thú cưng', 'Hệ thống phòng lưu trú cao cấp, sạch sẽ, có giám sát sức khỏe liên tục.', '/assets/img/service/service6.png');
 
 -- Insert doctor-service relationships
 INSERT INTO doctor_services (doctor_id, service_id) VALUES
@@ -195,3 +195,7 @@ INSERT INTO testimonials (customer_name, content, rating, status) VALUES
 ('Mai Anh', 'Bác sĩ ở đây rất tận tâm, thú cưng của mình được chăm sóc kỹ lưỡng. Highly recommend!', 5, 'approved'),
 ('Ngọc Trâm', 'Phòng khám sạch sẽ, dịch vụ nhanh chóng, nhân viên dễ thương.', 5, 'approved');
 
+DELETE s1 FROM services s1
+INNER JOIN services s2 
+WHERE 
+    s1.name = s2.name AND s1.id > s2.id;
