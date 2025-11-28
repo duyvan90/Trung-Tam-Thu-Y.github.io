@@ -1,39 +1,48 @@
 <?php
 session_start();
-require_once '../config/db.php'; // Kết nối Database
+require_once '../config/db.php';
 
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
+if (!isset($_SESSION['user_id'])) { header('Location: login.php'); exit; }
 $user_id = $_SESSION['user_id'];
 
-// --- ĐỒNG BỘ AVATAR TỪ DATABASE ---
-$stmt = $conn->prepare("SELECT name, specialty, image FROM doctors WHERE id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
+// Lấy thông tin user
+$stmt_u = $conn->prepare("SELECT name, specialty, image FROM doctors WHERE id = ?");
+$stmt_u->bind_param("i", $user_id);
+$stmt_u->execute();
+$user = $stmt_u->get_result()->fetch_assoc();
 
-// Xử lý hiển thị ảnh
+// Avatar đồng bộ
 $avatar_url = "../" . ($user['image'] ?? 'assets/img/default-avatar.png');
 if (!file_exists($avatar_url) || empty($user['image'])) {
-    $avatar_url = "https://ui-avatars.com/api/?name=" . urlencode($user['name']) . "&background=random&size=128";
+    $avatar_url = "https://ui-avatars.com/api/?name=" . urlencode($user['name']) . "&background=0097a7&color=fff&size=128";
 }
+
+// Tìm kiếm bệnh án
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$sql = "SELECT mr.*, b.fullname, b.pet_name, b.pet_type, b.appointment_date, d.name as doctor_name 
+        FROM medical_records mr
+        JOIN bookings b ON mr.booking_id = b.id
+        JOIN doctors d ON mr.doctor_id = d.id
+        WHERE b.fullname LIKE ? OR b.phone LIKE ? OR b.pet_name LIKE ?
+        ORDER BY mr.created_at DESC";
+
+$like_search = "%$search%";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("sss", $like_search, $like_search, $like_search);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kho Bệnh Án - PetCare Staff</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/staff-style.css">
     <style>
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .search-box input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .search-box input { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main); }
         .btn-search { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
@@ -46,9 +55,8 @@ if (!file_exists($avatar_url) || empty($user['image'])) {
         <a href="staff-profile.php" class="user-panel" style="text-decoration: none;">
             <img src="<?php echo $avatar_url; ?>" alt="Avatar">
             <div class="info">
-                <p>Xin chào,</p>
-                <h4><?php echo htmlspecialchars($user['name']); ?></h4>
-                <small style="color:#b0bec5; font-size: 12px;"><?php echo htmlspecialchars($user['specialty']); ?></small>
+                <h4 style="margin:0; font-size:15px; font-weight:600;"><?php echo htmlspecialchars($user['name']); ?></h4>
+                <small style="color:#b0bec5; font-size: 12px; display:block; margin-top:2px;"><?php echo htmlspecialchars($user['specialty']); ?></small>
             </div>
         </a>
 
@@ -63,13 +71,14 @@ if (!file_exists($avatar_url) || empty($user['image'])) {
     <main class="main-content">
         <header class="top-bar">
             <h2>Kho Lưu Trữ Bệnh Án</h2>
-            <div class="date-display">Dữ liệu toàn hệ thống</div>
+            <div class="date-display">Tổng số: <?php echo $result->num_rows; ?> hồ sơ</div>
         </header>
 
-        <div class="schedule-section"> <div class="search-box">
-                <input type="text" placeholder="Tìm theo tên khách hàng, SĐT hoặc tên thú cưng...">
-                <button class="btn-search">🔍 Tìm kiếm</button>
-            </div>
+        <div class="schedule-section"> 
+            <form action="" method="GET" class="search-box">
+                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Tìm theo tên khách hàng, SĐT hoặc tên thú cưng...">
+                <button type="submit" class="btn-search">🔍 Tìm kiếm</button>
+            </form>
 
             <div class="table-responsive">
                 <table>
@@ -84,30 +93,25 @@ if (!file_exists($avatar_url) || empty($user['image'])) {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>18/11/2025</td>
-                            <td>#BA001</td>
-                            <td>🐶 Miu (Chó)</td>
-                            <td>Viêm da dị ứng</td>
-                            <td>BS. Đào Văn Duy</td>
-                            <td><a href="#" class="btn-action view" style="text-decoration:none">👁️ Xem lại</a></td>
-                        </tr>
-                        <tr>
-                            <td>15/11/2025</td>
-                            <td>#BA005</td>
-                            <td>🐱 Bông (Mèo)</td>
-                            <td>Rối loạn tiêu hóa</td>
-                            <td>BS. Nguyễn Diễm Thùy</td>
-                            <td><a href="#" class="btn-action view" style="text-decoration:none">👁️ Xem lại</a></td>
-                        </tr>
-                        <tr>
-                            <td>10/11/2025</td>
-                            <td>#BA012</td>
-                            <td>🐶 Lu (Chó)</td>
-                            <td>Gãy xương chân trước</td>
-                            <td>BS. Phạm Quang Thảo</td>
-                            <td><a href="#" class="btn-action view" style="text-decoration:none">👁️ Xem lại</a></td>
-                        </tr>
+                        <?php if($result->num_rows > 0): ?>
+                            <?php while($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo date('d/m/Y', strtotime($row['appointment_date'])); ?></td>
+                                <td>#BA<?php echo str_pad($row['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td>
+                                    <?php echo htmlspecialchars($row['pet_name']); ?> 
+                                    <small>(<?php echo htmlspecialchars($row['pet_type']); ?>)</small>
+                                </td>
+                                <td><?php echo htmlspecialchars($row['diagnosis']); ?></td>
+                                <td><?php echo htmlspecialchars($row['doctor_name']); ?></td>
+                                <td>
+                                    <a href="medical-record.php?id=<?php echo $row['booking_id']; ?>" class="btn-save" style="background:var(--primary); padding:5px 10px; font-size:12px; text-decoration:none;">👁️ Xem lại</a>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr><td colspan="6" style="text-align:center;">Chưa có hồ sơ bệnh án nào.</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -116,11 +120,9 @@ if (!file_exists($avatar_url) || empty($user['image'])) {
 </div>
 
 <script>
-    // --- ĐỒNG BỘ DARK MODE ---
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
     }
 </script>
-
 </body>
 </html>
