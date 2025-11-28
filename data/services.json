@@ -1,0 +1,5 @@
+[
+  {"id":1,"name":"Khám tổng quát","short":"Khám sức khỏe định kỳ","image":"service1.jpg","content":"Khám tổng quát, xét nghiệm cơ bản, tư vấn dinh dưỡng."},
+  {"id":2,"name":"Tiêm phòng","short":"Vaccine & phòng bệnh","image":"service2.jpg","content":"Tiêm phòng định kỳ, phác đồ tiêm an toàn."},
+  {"id":3,"name":"Phẫu thuật","short":"Sát trùng & vô trùng","image":"service3.jpg","content":"Phẫu thuật tiểu phẫu và đại phẫu, chăm sóc hậu phẫu."}
+]
