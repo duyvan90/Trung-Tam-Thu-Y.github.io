@@ -12,28 +12,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!';
     } else {
-        // Tìm bác sĩ trong database (Bảng doctors)
-        // - Sử dụng bảng doctors cho Staff Portal
-        $stmt = $conn->prepare("SELECT * FROM doctors WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-
-        // Kiểm tra mật khẩu (đã mã hóa)
-        if ($user && password_verify($password, $user['password'])) {
-            // ĐĂNG NHẬP THÀNH CÔNG
-            // Lưu thông tin bác sĩ vào Session để các trang khác biết ai đang dùng
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_avatar'] = $user['image'];
-            $_SESSION['user_role'] = $user['specialty']; // Lấy chuyên khoa làm chức vụ
-
-            // Chuyển hướng vào Dashboard
-            header('Location: dashboard.php');
-            exit;
+        // Danh sách tài khoản được cấp phép (chỉ 3 bác sĩ được phép đăng nhập)
+        $authorized_accounts = ['bsduy', 'bsthuy', 'bstina'];
+        
+        // Kiểm tra xem tài khoản có được cấp phép không
+        if (!in_array($username, $authorized_accounts)) {
+            $error = 'Tài khoản này chưa được cấp phép. Vui lòng liên hệ quản trị viên.';
         } else {
-            $error = 'Sai tên đăng nhập hoặc mật khẩu!';
+            // Tìm bác sĩ trong database (Bảng doctors)
+            // - Sử dụng bảng doctors cho Staff Portal
+            $stmt = $conn->prepare("SELECT * FROM doctors WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user = $result->fetch_assoc();
+
+            // Kiểm tra mật khẩu (đã mã hóa)
+            if ($user) {
+                // Debug: Check if password field exists and is not empty
+                if (empty($user['password'])) {
+                    $error = 'Tài khoản chưa có mật khẩu. Vui lòng liên hệ quản trị viên để đặt mật khẩu.';
+                } elseif (password_verify($password, $user['password'])) {
+                    // ĐĂNG NHẬP THÀNH CÔNG
+                    // Lưu thông tin bác sĩ vào Session để các trang khác biết ai đang dùng
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['user_name'] = $user['name'];
+                    $_SESSION['user_avatar'] = $user['image'];
+                    $_SESSION['user_role'] = $user['specialty']; // Lấy chuyên khoa làm chức vụ
+
+                    // Chuyển hướng vào Dashboard
+                    header('Location: dashboard.php');
+                    exit;
+                } else {
+                    $error = 'Sai mật khẩu! Vui lòng kiểm tra lại hoặc chạy script reset password.';
+                }
+            } else {
+                $error = 'Không tìm thấy tài khoản này trong hệ thống!';
+            }
         }
     }
 }
@@ -99,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn-login">ĐĂNG NHẬP</button>
             
             <div class="login-footer">
-                <p>Chưa có tài khoản? <a href="register.php" style="color: var(--primary); font-weight: bold;">Đăng ký mới</a></p>
+                <p style="color: #666; font-size: 13px;">Tài khoản được cấp bởi quản trị viên</p>
             </div>
         </form>
     </div>

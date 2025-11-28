@@ -114,22 +114,32 @@ CREATE TABLE IF NOT EXISTS testimonials (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert sample data for doctors (bao gồm tài khoản đăng nhập staff)
+-- Password for all authorized accounts: 123456
+-- Hash generated with: password_hash('123456', PASSWORD_DEFAULT)
 INSERT INTO doctors (name, degree, specialty, description, image, email, phone, username, password) VALUES
 ('BS. Đào Văn Duy', 'Thạc sĩ Thú Y (M.V.Sc)', 'Chuyên khoa: Khám tổng quát, Điều trị bệnh nội khoa', 
  'BS. Duy là chuyên gia về khám sức khỏe định kỳ và chẩn đoán, điều trị các bệnh lý nội khoa phổ biến như tiêu hóa, hô hấp, da liễu.', 
- 'assets/img/doctors/doctor-duy.jpg', 'duy@petcare.vn', '0901000001', 'bsduy', '$2y$10$iQt4BrkDuLVcea6JkW54Qe.6QPBajbb.AoGk4rxHgM3EbJKd4x/YG'),
+ 'assets/img/doctors/doctor-duy.jpg', 'duy@petcare.vn', '0901000001', 'bsduy', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
 ('BS. Nguyễn Diễm Thùy', 'Bác sĩ Thú Y (D.V.M)', 'Chuyên khoa: Tiêm phòng, Tẩy giun & Khám tổng quát', 
  'BS. Thùy là người phụ trách chính chương trình Tiêm phòng và Tẩy giun tại PetCare.', 
- 'assets/img/doctors/doctor-thuy.jpg', 'thuy@petcare.vn', '0901000002', 'bsthuy', '$2y$10$iQt4BrkDuLVcea6JkW54Qe.6QPBajbb.AoGk4rxHgM3EbJKd4x/YG'),
+ 'assets/img/doctors/doctor-thuy.jpg', 'thuy@petcare.vn', '0901000002', 'bsthuy', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
 ('BS. Trần Ti Na', 'Thạc sĩ Thú Y (D.V.M)', 'Chuyên khoa: Xét nghiệm, Chẩn đoán & Bệnh phức tạp', 
  'BS. Ti Na chuyên sâu về phân tích kết quả Xét nghiệm và chẩn đoán bệnh lý phức tạp ở chó, mèo.', 
- 'assets/img/doctors/doctor-tina.jpg', 'tina@petcare.vn', '0901000003', 'bstina', '$2y$10$iQt4BrkDuLVcea6JkW54Qe.6QPBajbb.AoGk4rxHgM3EbJKd4x/YG'),
+ 'assets/img/doctors/doctor-tina.jpg', 'tina@petcare.vn', '0901000003', 'bstina', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
 ('BS. Phan Thành Đức Nhân', 'Thạc sĩ Ngoại khoa (M.S)', 'Chuyên khoa: Phẫu thuật Cấp cứu, Chẩn đoán Hình ảnh', 
  'BS. Đức Nhân là người thực hiện các kỹ thuật Chẩn đoán Hình ảnh như Siêu âm và X-Quang.', 
  'assets/img/doctors/doctor-nhan.jpg', 'nhan@petcare.vn', '0901000004', 'bsnhan', '$2y$10$iQt4BrkDuLVcea6JkW54Qe.6QPBajbb.AoGk4rxHgM3EbJKd4x/YG'),
 ('BS. Phạm Quang Thảo', 'Tiến sĩ Thú Y (Ph.D)', 'Chuyên khoa: Phẫu thuật Triệt sản, Chỉnh hình & Ngoại khoa chuyên sâu', 
  'BS. Quang Thảo là Phẫu thuật viên chính, chuyên trách các ca phức tạp cần kỹ thuật cao.', 
  'assets/img/doctors/doctor-thao.jpg', 'thao@petcare.vn', '0901000005', 'bsthao', '$2y$10$iQt4BrkDuLVcea6JkW54Qe.6QPBajbb.AoGk4rxHgM3EbJKd4x/YG');
+
+-- Update passwords for authorized doctor accounts to 123456
+-- Password: 123456
+-- Hash: $2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+-- Only 3 accounts are authorized: bsduy, bsthuy, bstina
+UPDATE doctors SET password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' WHERE username = 'bsduy';
+UPDATE doctors SET password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' WHERE username = 'bsthuy';
+UPDATE doctors SET password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' WHERE username = 'bstina';
 
 -- Insert sample data for services
 INSERT INTO services (name, short_description, description, image) VALUES

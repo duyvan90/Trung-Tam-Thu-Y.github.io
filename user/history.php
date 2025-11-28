@@ -13,6 +13,7 @@ $bookings = [];
 $error_message = '';
 
 // Truy vấn để lấy lịch sử đặt lịch của người dùng, kết hợp với tên dịch vụ và tên bác sĩ
+// CHỈ hiển thị booking có user_id (không hiển thị guest booking - user_id = NULL)
 $sql = "SELECT 
             b.id, 
             b.pet_name, 
@@ -26,7 +27,7 @@ $sql = "SELECT
         FROM bookings b
         LEFT JOIN services s ON b.service_id = s.id
         LEFT JOIN doctors d ON b.doctor_id = d.id
-        WHERE b.user_id = ? 
+        WHERE b.user_id = ? AND b.user_id IS NOT NULL
         ORDER BY b.appointment_date DESC, b.appointment_time DESC";
 
 try {

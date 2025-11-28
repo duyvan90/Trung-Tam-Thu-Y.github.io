@@ -60,26 +60,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Đối với Spa, doctor_name sẽ là 'Không cần bác sĩ (Kỹ thuật viên)' nên vẫn OK.
         $error_message = 'Vui lòng điền đầy đủ thông tin bắt buộc.';
     } else {
-              // Xác định user_id (nếu người dùng đã đăng nhập)
-          $current_user_id = $_SESSION['user_id'] ?? null;
-
-          // Insert booking
-          $sql = "INSERT INTO bookings (user_id, fullname, phone, email, pet_name, pet_type, service_id, doctor_id, appointment_date, appointment_time, note) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"; // Thêm 1 placeholder (?)
-          
-          try {
-              $stmt = executeQuery($sql, [
-                  $current_user_id, // Truyền user_id vào đây
-                  $fullname, $phone, $email ?: null, $pet_name, $pet_type, 
-                  $service_id, $doctor_id, $appointment_date, $appointment_time, $note ?: null
-              ]);
+        // Validate service_id exists
+        if ($service_id === null) {
+            $error_message = 'Dịch vụ không hợp lệ. Vui lòng chọn lại dịch vụ.';
+        } else {
+            // Insert booking
+            $sql = "INSERT INTO bookings (user_id, fullname, phone, email, pet_name, pet_type, service_id, doctor_id, appointment_date, appointment_time, note) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
-            $success_message = 'Đặt lịch thành công! Chúng tôi sẽ sớm liên hệ lại để xác nhận 🐾';
-            
-            // Clear form data
-            $_POST = [];
-        } catch (Exception $e) {
-            $error_message = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+            try {
+                // Build SQL with proper NULL handling - use NULL directly in SQL for optional integer fields
+                $sql = "INSERT INTO bookings (user_id, fullname, phone, email, pet_name, pet_type, service_id, doctor_id, appointment_date, appointment_time, note) 
+                        VALUES (";
+                
+                $placeholders = [];
+                $bind_params = [];
+                $types = '';
+                
+                // user_id (can be NULL - guest booking)
+                if ($current_user_id === null) {
+                    $placeholders[] = 'NULL';
+                } else {
+                    $placeholders[] = '?';
+                    $bind_params[] = $current_user_id;
+                    $types .= 'i';
+                }
+                
+                // fullname (required)
+                $placeholders[] = '?';
+                $bind_params[] = $fullname;
+                $types .= 's';
+                
+                // phone (required)
+                $placeholders[] = '?';
+                $bind_params[] = $phone;
+                $types .= 's';
+                
+                // email (optional)
+                if (empty($email)) {
+                    $placeholders[] = 'NULL';
+                } else {
+                    $placeholders[] = '?';
+                    $bind_params[] = $email;
+                    $types .= 's';
+                }
+                
+                // pet_name (required)
+                $placeholders[] = '?';
+                $bind_params[] = $pet_name;
+                $types .= 's';
+                
+                // pet_type (required)
+                $placeholders[] = '?';
+                $bind_params[] = $pet_type;
+                $types .= 's';
+                
+                // service_id (required)
+                $placeholders[] = '?';
+                $bind_params[] = (int)$service_id;
+                $types .= 'i';
+                
+                // doctor_id (optional)
+                if ($doctor_id === null) {
+                    $placeholders[] = 'NULL';
+                } else {
+                    $placeholders[] = '?';
+                    $bind_params[] = (int)$doctor_id;
+                    $types .= 'i';
+                }
+                
+                // appointment_date (required)
+                $placeholders[] = '?';
+                $bind_params[] = $appointment_date;
+                $types .= 's';
+                
+                // appointment_time (required)
+                $placeholders[] = '?';
+                $bind_params[] = $appointment_time;
+                $types .= 's';
+                
+                // note (optional)
+                if (empty($note)) {
+                    $placeholders[] = 'NULL';
+                } else {
+                    $placeholders[] = '?';
+                    $bind_params[] = $note;
+                    $types .= 's';
+                }
+                
+                $sql .= implode(', ', $placeholders) . ")";
+                
+                // Execute with prepared statement
+                $stmt = $conn->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+                
+                if (!empty($bind_params)) {
+                    $stmt->bind_param($types, ...$bind_params);
+                }
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Execute failed: " . $stmt->error);
+                }
+                
+                $success_message = 'Đặt lịch thành công! Chúng tôi sẽ sớm liên hệ lại để xác nhận 🐾';
+                
+                // Clear form data
+                $fullname = $phone = $email = $pet_name = $pet_type = '';
+                $service_name = $doctor_name = $appointment_date = $appointment_time = $note = '';
+                
+            } catch (Exception $e) {
+                // Log error for debugging (remove in production or log to file)
+                error_log("Booking error: " . $e->getMessage());
+                $error_message = 'Có lỗi xảy ra khi đặt lịch: ' . htmlspecialchars($e->getMessage());
+                // For production, use generic message:
+                // $error_message = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+            }
         }
     }
 }
@@ -232,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!selectedService) {
             defaultOption.textContent = '-- Vui lòng chọn dịch vụ trước --';
             doctorSelect.appendChild(defaultOption);
-            return;
+            return Promise.resolve();
         }
 
         doctorSelect.disabled = false;
@@ -244,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
             option.textContent = 'Không cần bác sĩ (Kỹ thuật viên)';
             doctorSelect.appendChild(option);
             doctorSelect.value = 'Không cần bác sĩ (Kỹ thuật viên)';
-            return;
+            return Promise.resolve();
         }
         // ---------------------------------------------------------
         
@@ -259,11 +356,32 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!serviceId) { 
                  defaultOption.textContent = '-- Dịch vụ không hợp lệ --';
                  doctorSelect.value = '';
-                 return;
+                 return Promise.reject('Invalid service');
             }
 
-            const response = await fetch(`../api/doctors.php?service_id=${serviceId}`);
+            const apiUrl = `../api/doctors.php?service_id=${serviceId}`;
+            console.log('Fetching doctors from:', apiUrl);
+            
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
+            console.log('API Response:', result);
+            
+            // Check if result is valid
+            if (!result) {
+                throw new Error('Invalid response from server');
+            }
+            
+            // Check for API error message
+            if (result.error || (result.success === false)) {
+                throw new Error(result.error || result.message || 'API returned error');
+            }
             
             doctorSelect.innerHTML = '';
             defaultOption.textContent = '-- Chọn bác sĩ phù hợp --';
@@ -271,24 +389,30 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // KHÔNG THÊM TÙY CHỌN KỸ THUẬT VIÊN/KHÔNG CẦN BÁC SĨ TẠI ĐÂY
 
-            if (result.success && result.data && result.data.length > 0) {
+            if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
                 result.data.forEach(doctor => {
                     let option = document.createElement('option');
                     option.value = doctor.name;
-                    option.textContent = doctor.name;
+                    option.textContent = doctor.name + (doctor.specialty ? ' - ' + doctor.specialty : '');
                     doctorSelect.appendChild(option);
                 });
             } else {
                 let option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Không có bác sĩ phù hợp (Bắt buộc phải chọn bác sĩ)';
+                option.textContent = 'Không có bác sĩ phù hợp cho dịch vụ này';
+                option.disabled = true;
                 doctorSelect.appendChild(option);
+                console.warn('No doctors found for service:', serviceId, result);
             }
+            
+            return Promise.resolve();
         } catch (error) {
             console.error('Error loading doctors:', error);
             doctorSelect.innerHTML = '';
-            defaultOption.textContent = '-- Lỗi tải danh sách bác sĩ --';
+            defaultOption.textContent = '-- Lỗi tải danh sách bác sĩ. Vui lòng thử lại. --';
+            defaultOption.disabled = true;
             doctorSelect.appendChild(defaultOption);
+            return Promise.reject(error);
         }
     }
 

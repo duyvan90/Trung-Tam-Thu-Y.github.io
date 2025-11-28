@@ -1,4 +1,8 @@
 <?php
+// Registration is disabled - only authorized accounts are allowed
+header('Location: login.php');
+exit;
+
 session_start();
 require_once '../config/db.php';
 

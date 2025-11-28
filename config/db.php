@@ -58,11 +58,40 @@ try {
 function executeQuery($sql, $params = []) {
     global $conn;
     $stmt = $conn->prepare($sql);
-    if ($params) {
-        $types = str_repeat('s', count($params)); // Default to string type
-        $stmt->bind_param($types, ...$params);
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
     }
-    $stmt->execute();
+    
+    if ($params) {
+        // Auto-detect parameter types: 'i' for integers, 'd' for doubles, 's' for strings
+        $types = '';
+        $bind_params = [];
+        foreach ($params as $param) {
+            if ($param === null) {
+                // For NULL values, we need to handle them specially
+                // MySQLi doesn't bind NULL directly, so we'll use a workaround
+                $types .= 's';
+                $bind_params[] = '';
+            } elseif (is_int($param)) {
+                $types .= 'i';
+                $bind_params[] = $param;
+            } elseif (is_float($param)) {
+                $types .= 'd';
+                $bind_params[] = $param;
+            } else {
+                $types .= 's';
+                $bind_params[] = $param;
+            }
+        }
+        $stmt->bind_param($types, ...$bind_params);
+    }
+    
+    if (!$stmt->execute()) {
+        $error = $stmt->error ?: $conn->error;
+        $stmt->close();
+        throw new Exception("Execute failed: " . $error);
+    }
+    
     return $stmt;
 }
 

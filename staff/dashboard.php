@@ -119,7 +119,7 @@ $result_bookings = $stmt_b->get_result();
                                 <td>
                                     <?php if($status == 'pending'): ?>
                                         <span class="status pending" id="status-<?php echo $row['id']; ?>">Chờ Check-in</span>
-                                    <?php elseif($status == 'waiting'): ?>
+                                    <?php elseif($status == 'waiting' || $status == 'confirmed'): ?>
                                         <span class="status waiting" id="status-<?php echo $row['id']; ?>">Đang đợi khám</span>
                                     <?php elseif($status == 'completed'): ?>
                                         <span class="status completed">Đã xong</span>
@@ -132,7 +132,7 @@ $result_bookings = $stmt_b->get_result();
                                     <?php if($status == 'pending'): ?>
                                         <button class="btn-action checkin" onclick="handleCheckIn(<?php echo $row['id']; ?>)">✅ Check-in</button>
                                         <button class="btn-action cancel" onclick="handleCancel(<?php echo $row['id']; ?>)">❌ Hủy</button>
-                                    <?php elseif($status == 'waiting'): ?>
+                                    <?php elseif($status == 'waiting' || $status == 'confirmed'): ?>
                                         <a href="medical-record.php?id=<?php echo $row['id']; ?>" class="btn-action exam" style="display:inline-block; text-decoration:none;">🩺 Khám ngay</a>
                                     <?php elseif($status == 'completed'): ?>
                                         <a href="medical-record.php?id=<?php echo $row['id']; ?>&view=true" class="btn-action view" style="display:inline-block; text-decoration:none;">👁️ Xem hồ sơ</a>
@@ -161,16 +161,27 @@ $result_bookings = $stmt_b->get_result();
     // --- API UPDATE STATUS ---
     async function updateStatusAPI(id, status) {
         try {
-            const response = await fetch('api/update_status.php', {
+            const response = await fetch('update_status.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: id, status: status })
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'HTTP error: ' + response.status);
+            }
+            
             const result = await response.json();
-            return result.success;
+            
+            if (!result.success) {
+                throw new Error(result.error || 'API returned error');
+            }
+            
+            return true;
         } catch (error) {
             console.error('Lỗi API:', error);
-            alert('Có lỗi xảy ra khi lưu dữ liệu!');
+            alert('Có lỗi xảy ra khi lưu dữ liệu: ' + error.message);
             return false;
         }
     }
